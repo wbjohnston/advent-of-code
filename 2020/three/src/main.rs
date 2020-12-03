@@ -1,5 +1,12 @@
 use itertools::Itertools;
 
+fn coords_iter(xx: usize, yy: usize) -> impl Iterator<Item = (usize, usize)> {
+    let x_iter = (0..).step_by(xx);
+    let y_iter = (0..).step_by(yy);
+
+    x_iter.zip(y_iter)
+}
+
 fn main() {
     let grid: Vec<Vec<char>> = INPUT
         .split_whitespace()
@@ -30,7 +37,17 @@ fn main() {
 
     let slopes = [(1, 1), (3, 1), (5, 1), (7, 1), (1, 2)];
 
-    let product = slopes.iter().fold(1, |acc, (xx, yy)| acc * foo(xx, yy));
+    // NOTE: alternative iterator version
+    // let foo = move |xx, yy| {
+    //     coords_iter(xx, yy)
+    //         .skip(1) // skip 0, 0
+    //         .take_while(|(_, y)| y < &grid.len()) // take until were out of bounds
+    //         .map(|(x, y)| grid[y][x % grid[0].len()])
+    //         .filter(|x| x == &'#')
+    //         .count()
+    // };
+
+    let product = slopes.iter().fold(1, |acc, &(xx, yy)| acc * foo(xx, yy));
 
     println!("{}", product);
 }
