@@ -50,13 +50,77 @@ fn validate_passport(passport: &Passport) -> bool {
         "pid",
         // "cid",
     ];
+
+    fn validate_byr(s: &str) -> bool {
+        match s.parse::<u64>() {
+            Ok(n) => n >= 1920 && n <= 2002,
+            _ => false
+        }
+    }
+
+    fn validate_iyr(s: &str) -> bool {
+        match s.parse::<u64>() {
+            Ok(n) => n >= 2010 && n <= 2020,
+            _ => false
+        }
+    }
+
+    fn validate_eyr(s: &str) -> bool {
+        match s.parse::<u64>() {
+            Ok(n) => n >= 2020 && n <= 2030,
+            _ => false
+        }
+    }
+
+    fn validate_hgt(s: &str) -> bool {
+        let mut iter = s.chars();
+
+        let num_str: String = iter.by_ref().peeking_take_while(|x| x.is_numeric()).collect();
+        let num: u32 = num_str.as_str().parse().unwrap();
+
+        let unit: String = iter.collect();
+
+        match unit.as_str() {
+            "cm" => num >= 150 && num <= 193,
+            "in" => num >= 59 && num <= 76,
+            _ => false
+        }
+    }
+
+    fn validate_hcl(s: &str) -> bool {
+        let re = Regex::new(r#"^#[\dabcdef]{6}$"#).unwrap();
+        re.is_match(s)
+    }
+
+    fn validate_ecl(s: &str) -> bool {
+        match s {
+            "amb" | "blu" | "brn" | "gry" | "grn" | "hzl" | "oth" => true,
+            _ => false
+        }
+    }
+
+    fn validate_pid(s: &str) -> bool {
+        let re = Regex::new(r#"^\d{9}$"#).unwrap();
+        re.is_match(s)
+    }
+
+    let is_valid = [
+        passport.get("byr").map(|x|validate_byr(x.as_str())),
+        passport.get("iyr").map(|x|validate_iyr(x.as_str())),
+        passport.get("eyr").map(|x|validate_eyr(x.as_str())),
+        passport.get("hgt").map(|x|validate_hgt(x.as_str())),
+        passport.get("hcl").map(|x|validate_hcl(x.as_str())),
+        passport.get("ecl").map(|x|validate_ecl(x.as_str())),
+        passport.get("pid").map(|x|validate_pid(x.as_str())),
+    ].into_iter().all(|x| x == &Some(true));
+
+
+    if !is_valid {
+        return false
+    }
+
     let required_fields: HashSet<String> =  HashSet::from_iter(data.into_iter().map(|x| x.to_string()));
-
-    dbg!(&required_fields);
-
     let passport_fields: HashSet<String> = HashSet::from_iter(passport.keys().cloned());
-
-    dbg!(&passport_fields);
 
     // the intersection will be equal to required fields if all fields are present
     let intersect = required_fields.intersection(&passport_fields);
