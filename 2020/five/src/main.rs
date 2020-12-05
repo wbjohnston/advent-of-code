@@ -1,5 +1,6 @@
-use itertools::Itertools;
+use itertools::{iproduct, Itertools};
 use regex::Regex;
+use std::iter::FromIterator;
 
 fn boarding_pass_row_number(s: &String) -> u8 {
     let mut size = 128;
@@ -42,16 +43,22 @@ fn seat_id(row: u8, column: u8) -> u32 {
 fn main() {
     let boarding_passes = INPUT.split_whitespace().map(|x| x.chars().collect());
 
-    let max_id = boarding_passes
+    let mut occupied_seats: Vec<u32> = boarding_passes
         .map(|x| {
             let row = boarding_pass_row_number(&x);
             let col = board_pass_col_number(&x);
             seat_id(row, col)
         })
-        .max()
-        .unwrap();
+        .collect();
 
-    println!("{}", max_id);
+    occupied_seats.sort();
+
+    for (i, &x) in occupied_seats.iter().enumerate().skip(1) {
+        let previous = occupied_seats[i - 1];
+        if x > previous + 1 {
+            println!("{}", x - 1)
+        }
+    }
 }
 // const INPUT: &'static str = r#"BFFFBBFRRR
 //  FFFBBBFRRR
