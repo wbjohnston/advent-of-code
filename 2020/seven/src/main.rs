@@ -4,50 +4,56 @@ use std::collections::HashMap;
 
 fn main() {
     let bag_re = Regex::new(r#"^(\w+\s+\w+)"#).unwrap();
-    let contents_re =
-        Regex::new(r#"contain (?:(\d+)\s(\w+\s+\w+))\s+bag(?:s?, (\d+)\s+(\w+\s+\w+) bags?)*\.$"#)
-            .unwrap();
+    let contents_re = Regex::new(r#"(\d+)\s+(\w+\s+\w+) bag"#).unwrap();
 
-    let mut rules: HashMap<&str, Vec<&str>> = HashMap::new();
+    let mut rules: HashMap<&str, Vec<(usize, &str)>> = HashMap::new();
     for line in INPUT.split("\n") {
         let base_bag = bag_re.find(line).unwrap().as_str();
 
         let entry = rules.entry(base_bag).or_default();
 
         for group in contents_re.captures_iter(line) {
-            for i in (1..group.len()).step_by(2) {
-                let n = group.get(i);
-                let bag = group.get(i + 1);
+            let n = group.get(1).unwrap().as_str().parse().unwrap();
+            let bag = group.get(2).unwrap().as_str();
 
-                match (n, bag) {
-                    (Some(n), Some(bag)) => {
-                        let n = n.as_str().parse().unwrap();
-
-                        for _ in 0..n {
-                            entry.push(bag.as_str());
-                        }
-                    }
-                    _ => continue,
-                }
-            }
+            entry.push((n, bag));
         }
     }
 
-    let gold: usize = rules.keys().filter(|x| contains_gold(x, &rules)).count();
+    // dbg!(&rules);
 
-    println!("{}", gold);
+    let gold = required_bags("shiny gold", &rules);
+    // dbg!(required_bags("dark violet", &rules));
+
+    println!("{}", gold - 1);
 }
 
-fn contains_gold(bag: &str, rules: &HashMap<&str, Vec<&str>>) -> bool {
+fn required_bags(bag: &str, rules: &HashMap<&str, Vec<(usize, &str)>>) -> usize {
     match rules.get(bag) {
-        Some(children) => {
-            let c = children.contains(&"shiny gold");
-            let children_contain_gold = children.iter().any(|x| contains_gold(x, rules));
-            c || children_contain_gold
+        Some(children) if children.len() >= 1 => {
+            let child_bags: usize = children
+                .iter()
+                .map(|&(n, child)| {
+                    // dbg!(n, child);
+                    // dbg!(required_bags(child, rules));
+                    n * required_bags(child, rules)
+                })
+                .sum();
+
+            1 + child_bags
         }
-        None => false,
+        None => unimplemented!(),
+        _ => 1,
     }
 }
+
+// const INPUT: &'static str = r#"shiny gold bags contain 2 dark red bags.
+// dark red bags contain 2 dark orange bags.
+// dark orange bags contain 2 dark yellow bags.
+// dark yellow bags contain 2 dark green bags.
+// dark green bags contain 2 dark blue bags.
+// dark blue bags contain 2 dark violet bags.
+// dark violet bags contain no other bags."#;
 
 const INPUT: &'static str = r#"light salmon bags contain 5 dark brown bags, 2 dotted coral bags, 5 mirrored turquoise bags.
 drab magenta bags contain 1 vibrant purple bag, 5 dark lime bags, 2 clear silver bags.
@@ -606,7 +612,7 @@ plaid bronze bags contain 3 wavy blue bags.
 posh tan bags contain 4 clear bronze bags, 4 bright cyan bags.
 dim green bags contain 4 dim beige bags.
 dark black bags contain 4 dim chartreuse bags, 1 muted blue bag, 2 pale silver bags.
-drab chartreuse bags contain 2 vibrant blue bags, 5 dark tomato bags, 5 dark brown bags.
+drab chartreuse bags contain 2 vibrant blue bags, I needed to start5 dark tomato bags, 5 dark brown bags.
 vibrant aqua bags contain 1 muted white bag, 5 posh teal bags.
 striped salmon bags contain 5 plaid coral bags, 1 drab black bag, 4 bright salmon bags.
 plaid beige bags contain 3 dotted bronze bags.
