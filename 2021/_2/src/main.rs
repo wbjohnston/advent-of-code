@@ -4,30 +4,27 @@ fn main() {
 }
 
 fn part1() {
-    let result = input()
-        .iter()
-        .map(|x| match x {
-            Move {
-                direction: Direction::Forward,
-                magnitude,
-            } => vec![*magnitude as i64, 0],
-            Move {
-                direction: Direction::Backward,
-                magnitude,
-            } => vec![-(*magnitude as i64), 0],
-            Move {
-                direction: Direction::Up,
-                magnitude,
-            } => vec![0, -(*magnitude as i64)],
-            Move {
-                direction: Direction::Down,
-                magnitude,
-            } => vec![0, *magnitude as i64],
-        })
-        .fold(vec![0i64, 0i64], |acc, x| vec![acc[0] + x[0], acc[1] + x[1]]);
-    
+    let result = input().iter().fold((0, 0, 0), |(x, y, aim), mv| match mv {
+        Move {
+            direction: Direction::Forward,
+            magnitude,
+        } => (x + magnitude, y + aim * magnitude, aim),
+        Move {
+            direction: Direction::Backward,
+            magnitude,
+        } => (x, y, aim),
+        Move {
+            direction: Direction::Up,
+            magnitude,
+        } => (x, y, aim - magnitude),
+        Move {
+            direction: Direction::Down,
+            magnitude,
+        } => (x, y, aim + magnitude),
+    });
+
     println!("{:?}", result);
-    println!("{}", result[0] * result[1]);
+    println!("{}", result.0 * result.1);
 }
 
 fn part2() {}
@@ -50,7 +47,7 @@ fn input() -> Vec<Move> {
 
             let magnitude = magnitude_str
                 .to_owned()
-                .and_then(|x| x.parse::<u32>().ok())
+                .and_then(|x| x.parse::<i64>().ok())
                 .unwrap();
 
             Move {
@@ -72,7 +69,7 @@ enum Direction {
 #[derive(Debug)]
 struct Move {
     direction: Direction,
-    magnitude: u32,
+    magnitude: i64,
 }
 
 const INPUT: &str = r#"forward 9
